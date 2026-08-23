@@ -1,0 +1,8 @@
+---
+- Media:
+    - Jellyfin:
+        href: https://jellyfin.example.org
+        description: Media server
+        server: hmsrv01
+        container: jellyfin
+        showStats: true

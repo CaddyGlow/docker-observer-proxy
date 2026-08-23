@@ -1,0 +1,32 @@
+[package]
+name = "docker-observer-proxy"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.85"
+description = "A tiny, allowlisted, read-only Docker API view for Homepage"
+license = "MIT"
+repository = "https://github.com/CaddyGlow/docker-observer-proxy"
+
+[dependencies]
+axum = { version = "0.8", features = ["tokio", "http1"] }
+http-body-util = "0.1"
+hyper = { version = "1", features = ["client", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+serde_json = "1"
+sha2 = "0.10"
+subtle = "2"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "net", "signal", "time", "sync"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"

@@ -1,0 +1,32 @@
+services:
+  docker-observer-proxy:
+    image: ghcr.io/caddyglow/docker-observer-proxy:latest
+    container_name: docker-observer-proxy
+    network_mode: host
+    user: "65532:65532"
+    group_add:
+      # Set with: export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
+      - "${DOCKER_GID:?set DOCKER_GID to the Docker socket group id}"
+    environment:
+      DOP_LISTEN_ADDR: "${DOP_LISTEN_ADDR:-10.83.100.5:2375}"
+      DOP_ALLOWED_CLIENT_IPS: "${DOP_ALLOWED_CLIENT_IPS:-10.83.100.10}"
+      DOP_ALLOWED_CONTAINERS: "${DOP_ALLOWED_CONTAINERS:?comma-separated container names required}"
+      DOP_AUTH_TOKEN_FILE: /run/secrets/docker-observer-token
+      DOP_LOG_FORMAT: json
+      RUST_LOG: docker_observer_proxy=info
+    secrets:
+      - docker-observer-token
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 64
+    mem_limit: 64m
+    cpus: 0.25
+    restart: unless-stopped
+
+secrets:
+  docker-observer-token:
+    file: ./secrets/docker-observer-token

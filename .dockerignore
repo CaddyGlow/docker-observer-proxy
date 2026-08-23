@@ -1,0 +1,7 @@
+.git
+.github
+deploy
+target
+.env
+secrets
+*.md

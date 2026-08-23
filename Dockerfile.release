@@ -1,0 +1,9 @@
+# syntax=docker/dockerfile:1.7
+# Release-only image: binaries are produced once by the cross-build job, then
+# reused here instead of compiling a second time under slow QEMU emulation.
+FROM scratch
+ARG TARGETARCH
+COPY --chmod=0755 dist/docker-observer-proxy-${TARGETARCH} /docker-observer-proxy
+USER 65532:65532
+EXPOSE 2375
+ENTRYPOINT ["/docker-observer-proxy"]

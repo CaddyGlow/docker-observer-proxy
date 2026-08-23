@@ -1,0 +1,6 @@
+---
+hmsrv01:
+  host: 10.83.100.5
+  port: 2375
+  headers:
+    Authorization: "Bearer {{HOMEPAGE_VAR_DOCKER_PROXY_TOKEN}}"
