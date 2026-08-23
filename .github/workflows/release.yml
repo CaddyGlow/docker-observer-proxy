@@ -49,14 +49,12 @@ jobs:
             arch: arm64
     steps:
       - uses: actions/checkout@v7
-      - uses: Swatinem/rust-cache@v2
-        with:
-          key: ${{ matrix.target }}
       - name: Build static binary
         uses: houseabsolute/actions-rust-cross@v1
         with:
           command: build
           target: ${{ matrix.target }}
+          toolchain: "1.85.0"
           args: "--locked --release"
           strip: true
       - name: Package binary
