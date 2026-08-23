@@ -2,7 +2,7 @@ name: Release
 
 on:
   push:
-    tags: ["v[0-9]+.[0-9]+.[0-9]+"]
+    tags: ["v*"]
 
 permissions:
   contents: write
@@ -20,6 +20,17 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.85.0
         with:
           components: clippy,rustfmt
+      - name: Validate version tag
+        run: |
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "tag is not semantic versioning: $GITHUB_REF_NAME" >&2
+            exit 1
+          fi
+          cargo_version=$(cargo metadata --no-deps --format-version 1 | jq -r '.packages[0].version')
+          if [[ "v$cargo_version" != "$GITHUB_REF_NAME" ]]; then
+            echo "tag $GITHUB_REF_NAME does not match Cargo version $cargo_version" >&2
+            exit 1
+          fi
       - uses: Swatinem/rust-cache@v2
       - run: cargo fmt --all --check
       - run: cargo test --all-targets --locked
@@ -88,7 +99,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
       - uses: docker/build-push-action@v6
         with:
           context: .
@@ -112,7 +123,11 @@ jobs:
       - name: Publish GitHub release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: >-
-          gh release create "$GITHUB_REF_NAME"
-          dist/*.tar.gz dist/*.sha256
-          --verify-tag --generate-notes
+        run: |
+          flags=()
+          if [[ "$GITHUB_REF_NAME" == *-* ]]; then
+            flags+=(--prerelease)
+          fi
+          gh release create "$GITHUB_REF_NAME" \
+            dist/*.tar.gz dist/*.sha256 \
+            --verify-tag --generate-notes "${flags[@]}"
