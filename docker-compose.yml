@@ -1,9 +1,10 @@
 services:
   docker-observer-proxy:
-    image: ghcr.io/caddyglow/docker-observer-proxy:latest
+    image: ghcr.io/caddyglow/docker-observer-proxy:0.1.0-beta
     container_name: docker-observer-proxy
     network_mode: host
-    user: "65532:65532"
+    # The source token is mode 0600, so run as its unprivileged host owner.
+    user: "${DOP_UID:?set DOP_UID to the token owner}:${DOP_GID:?set DOP_GID to the token group}"
     group_add:
       # Set with: export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
       - "${DOCKER_GID:?set DOCKER_GID to the Docker socket group id}"

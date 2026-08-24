@@ -62,12 +62,16 @@ container names plus the Docker socket's group ID:
 install -d -m 0700 secrets
 openssl rand -base64 48 > secrets/docker-observer-token
 chmod 0600 secrets/docker-observer-token
+export DOP_UID=$(id -u)
+export DOP_GID=$(id -g)
 export DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
 export DOP_ALLOWED_CONTAINERS='jellyfin,sonarr,radarr'
 docker compose up -d
 ```
 
-The example uses host networking so application-level source-IP checks see
+The container uses the unprivileged owner of the mode-0600 token file; its
+supplementary Docker socket group is still root-equivalent. The example uses
+host networking so application-level source-IP checks see
 `10.83.100.10` rather than a Docker bridge address. Add a host firewall rule
 that permits TCP/2375 only from `10.83.100.10`; the in-process check is defence
 in depth, not a substitute for that rule.

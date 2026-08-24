@@ -101,49 +101,58 @@ policy. Live compatibility is covered by the rollout probe below.
       GitHub releases and a cached multi-architecture GHCR image; the image
       reuses those binaries rather than recompiling ARM64 under QEMU
 
-### 4. hmsrv01 deployment — pending
+### 4. hmsrv01 deployment — complete
 
 This belongs in `CaddyGlow/homelab-compose`, which owns the Docker host.
 
-- [ ] Store a 48-byte random token in Infisical; do not commit it
-- [ ] Choose the initial container names and set `DOP_ALLOWED_CONTAINERS`
-- [ ] Deploy the pinned GHCR digest on host networking
-- [ ] Publish only `10.83.100.5:2375`
-- [ ] Add a host firewall rule allowing TCP/2375 only from `10.83.100.10`
-- [ ] Confirm another VLAN 100 host cannot connect
-- [ ] Confirm restart and resource limits behave under Docker failure
+- [x] Store a 48-byte random token in Infisical; do not commit it
+- [x] Use `jellyfin` as the initial `DOP_ALLOWED_CONTAINERS` canary
+- [x] Deploy `v0.1.0-beta` pinned to GHCR manifest digest
+      `sha256:ba2560f3f2b88f97eb7e0bccff65acd94839fbe223f7056ddf7d9d19f8502743`
+      on host networking
+- [x] Publish only `10.83.100.5:2375`
+- [x] Add a persistent standalone nftables rule allowing TCP/2375 only from
+      `10.83.100.10`, without taking ownership of Docker or Tailscale tables
+- [x] Confirm a non-allowlisted LAN source times out
+- [x] Confirm restart recovery, read-only rootfs, 64 MiB memory, 0.25 CPU and
+      64-PID limits; confirm unavailable-socket requests return a bounded 502
 
-Do not deploy `latest` in the live Compose tree. The README uses it for a
-copyable example; production must pin the tag and resolved digest.
+Do not deploy `latest` in the live Compose tree. The README pins the current
+beta tag for a copyable example; production pins both tag and resolved digest.
 
-### 5. Homepage integration — pending
+### 5. Homepage integration — complete
 
 This belongs in `CaddyGlow/mazenet-infra`, which owns the Homepage role.
 
-- [ ] Add `HOMEPAGE_DOCKER_PROXY_TOKEN` to Infisical
-- [ ] Render `docker.yaml` with `10.83.100.5:2375` and the Authorization header
-- [ ] Add the token to `homepage.env` as a `HOMEPAGE_VAR_*` substitution
-- [ ] Mount `docker.yaml` with the existing config files
-- [ ] Add matching `server`, `container`, and selective `showStats` fields
-- [ ] Keep the existing no-socket mount: Homepage never receives Docker access
-- [ ] Update the Homepage role README with the two-repository ownership split
+- [x] Add `HOMEPAGE_DOCKER_PROXY_TOKEN` to Infisical
+- [x] Render `docker.yaml` with `10.83.100.5:2375` and the Authorization header
+- [x] Add the token to `homepage.env` as a `HOMEPAGE_VAR_*` substitution
+- [x] Mount `docker.yaml` with the existing config files
+- [x] Add matching `server`, `container`, and selective `showStats` fields
+- [x] Keep the existing no-socket mount: Homepage never receives Docker access
+- [x] Update the Homepage role README with the two-repository ownership split
 
-### 6. Rollout and acceptance — pending
+### 6. Rollout and acceptance — canary observation
 
 From `hmsrv01-observe-01`, using the real token:
 
-- [ ] `_ping` returns success
-- [ ] `/containers/json?all=true` contains every configured container and no
+- [x] `_ping` returns success
+- [x] `/containers/json?all=true` contains every configured container and no
       unconfigured container
-- [ ] inspect reports state/health for each configured name
-- [ ] stats returns one finite JSON response and closes
-- [ ] Homepage shows status and expanded CPU/memory/network values
-- [ ] a wrong token returns 401
-- [ ] an unlisted container returns 404
-- [ ] POST `/containers/create` returns 405
-- [ ] logs, exec, archive, image, volume, event and info routes are unavailable
-- [ ] stopping Docker produces a bounded 502 rather than a hung Homepage request
-- [ ] proxy logs contain no token, Docker body, label value or environment value
+- [x] inspect reports state/health for each configured name
+- [x] stats returns one finite JSON response and closes
+- [x] Homepage's own status API reports Jellyfin running/healthy and its stats
+      API returns CPU and memory data
+- [x] a wrong token returns 401
+- [x] an unlisted container returns 404
+- [x] POST `/containers/create` returns 405
+- [x] logs, exec, archive, image, volume, event and info routes are unavailable
+- [x] an unavailable Docker socket produces a bounded 502 rather than a hung
+      request, verified with an isolated no-socket instance so the production
+      daemon and its unrelated workloads were not stopped
+- [x] proxy logs contain no token, authorization header, Docker body, label
+      value or environment value
+- [ ] Keep the Jellyfin-only canary stable for one day before adding names
 
 Roll out with one low-risk container first. Add the remaining names only after
 Homepage status and stats remain stable for a day.
